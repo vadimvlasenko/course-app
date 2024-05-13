@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -37,6 +38,7 @@ public class CourseRatingService {
 
     @Transactional
     public void createMultipleRatings(Long courseId, Integer score, Long[] customers, String comment) {
+        log.info("Rate course {} by customers {}", courseId, Arrays.asList(customers));
         var course = validateCourse(courseId);
         for (var customerId : customers) {
             var courseRating = new CourseRating(course, customerId, score, comment);
@@ -64,8 +66,36 @@ public class CourseRatingService {
         return Map.of("average", courseRatingAverage);
     }
 
+    public RatingDto updateAllCourseRating(long courseId, RatingDto ratingDto) {
+        var courseRating = validateCourseRating(courseId, ratingDto.getCustomerId());
+        courseRating.setScore(ratingDto.getScore());
+        courseRating.setComment(ratingDto.getComment());
+        return new RatingDto(courseRatingRepository.save(courseRating));
+    }
+
+    public RatingDto updatePartialCourseRating(long courseId, RatingDto ratingDto) {
+        var courseRating = validateCourseRating(courseId, ratingDto.getCustomerId());
+        if (ratingDto.getScore() != null) {
+            courseRating.setScore(ratingDto.getScore());
+        }
+        if (ratingDto.getComment() != null) {
+            courseRating.setComment(ratingDto.getComment());
+        }
+        return new RatingDto(courseRatingRepository.save(courseRating));
+    }
+
+    public void deleteCourseRating(long courseId, long customerId) {
+        var course = validateCourseRating(courseId, customerId);
+        courseRatingRepository.delete(course);
+    }
+
     private Course validateCourse(long courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new NoSuchElementException("Course does not exists: " + courseId));
+    }
+
+    private CourseRating validateCourseRating(long courseId, long customerId) {
+        return courseRatingRepository.findByCourseIdAndCustomerId(courseId, customerId)
+                .orElseThrow(() -> new NoSuchElementException("CourseRating does not exists for pair: " + courseId + " - " + customerId));
     }
 }

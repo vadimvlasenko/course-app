@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import javax.persistence.Column;
@@ -32,9 +33,11 @@ public class CourseRating {
     @Column(name="customer_id")
     private Long customerId;
 
+    @Setter
     @Column(nullable = false)
     private Integer score;
 
+    @Setter
     @Column
     private String comment;
 
