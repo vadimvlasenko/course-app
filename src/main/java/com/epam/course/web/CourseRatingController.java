@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,6 +33,15 @@ public class CourseRatingController {
     public void createCourseRating(@PathVariable("courseId") Long courseId,
                                    @RequestBody @Validated RatingDto ratingDto) {
         courseRatingService.createRating(courseId, ratingDto);
+    }
+
+    @PostMapping("/{score}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createMultipleCourseRating(@PathVariable("courseId") Long courseId,
+                                           @PathVariable("score") Integer score,
+                                           @RequestParam("customers") Long[] customers,
+                                           @RequestParam("comment") String comment) {
+        courseRatingService.createMultipleRatings(courseId, score, customers, comment);
     }
 
     @GetMapping

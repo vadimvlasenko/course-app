@@ -8,6 +8,7 @@ import com.epam.course.web.RatingDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,17 @@ public class CourseRatingService {
         courseRatingRepository.save(courseRating);
         log.info("Course rating for courseId={}, customerId={} was created with the score={} and comment='{}'",
                 courseId, ratingDto.getCustomerId(), ratingDto.getScore(), ratingDto.getComment());
+    }
+
+    @Transactional
+    public void createMultipleRatings(Long courseId, Integer score, Long[] customers, String comment) {
+        var course = validateCourse(courseId);
+        for (var customerId : customers) {
+            var courseRating = new CourseRating(course, customerId, score, comment);
+            courseRatingRepository.save(courseRating);
+            log.info("Course rating for courseId={}, customerId={} was created with the score={} and comment='{}'",
+                    courseId, customerId, score, comment);
+        }
     }
 
     public List<RatingDto> getAllCourseRatings(long courseId) {
