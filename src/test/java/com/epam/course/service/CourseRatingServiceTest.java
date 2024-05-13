@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.when;
 class CourseRatingServiceTest {
     private static final long COURSE_ID = 1L;
     private static final long CUSTOMER_ID = 2L;
+    private static final RatingDto RATING_DTO = new RatingDto(CUSTOMER_ID, 5, "Excellent");
 
     @Mock
     private CourseRatingRepository courseRatingRepositoryMock;
@@ -35,7 +38,6 @@ class CourseRatingServiceTest {
     @Test
     void shouldCreateRatingSuccessfully() {
         // given
-        var ratingDto = new RatingDto(CUSTOMER_ID, 5, "Excellent");
         var coursePackage = new CoursePackage("QWER", "course package");
         var course = new Course("name", "description", 100, "3H", coursePackage, Difficulty.MEDIUM);
         when(courseRepositoryMock.findById(COURSE_ID)).thenReturn(Optional.of(course));
@@ -43,7 +45,7 @@ class CourseRatingServiceTest {
         var expected = new CourseRating(course, CUSTOMER_ID, 5, "Excellent");
 
         // when
-        courseRatingService.createRating(COURSE_ID, ratingDto);
+        courseRatingService.createRating(COURSE_ID, RATING_DTO);
 
         // then
         verify(courseRatingRepositoryMock).save(expected);
@@ -51,10 +53,53 @@ class CourseRatingServiceTest {
 
     @Test
     void shouldThrowNoSuchElementExceptionWhenCreateRating() {
-        // given
-        var ratingDto = new RatingDto(CUSTOMER_ID, 5, "Excellent");
+        // given, when, then
+        assertThrows(NoSuchElementException.class, () -> courseRatingService.createRating(COURSE_ID, RATING_DTO));
+    }
 
-        // when, then
-        assertThrows(NoSuchElementException.class, () -> courseRatingService.createRating(COURSE_ID, ratingDto));
+    @Test
+    void shouldGetAllCourseRatingsSuccessfully() {
+        // given
+        var coursePackage = new CoursePackage("QWER", "course package");
+        var course = new Course("name", "description", 100, "3H", coursePackage, Difficulty.MEDIUM);
+        when(courseRepositoryMock.findById(COURSE_ID)).thenReturn(Optional.of(course));
+        when(courseRatingRepositoryMock.findByCourseId(COURSE_ID)).thenReturn(List.of(new CourseRating(course, CUSTOMER_ID, 5, "Excellent")));
+        var expected = List.of(new RatingDto(CUSTOMER_ID, 5, "Excellent"));
+
+        // when
+        var actual = courseRatingService.getAllCourseRatings(COURSE_ID);
+
+        // then
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void shouldThrowNoSuchElementExceptionWhenGetAllCourseRatings() {
+        // given, when, then
+        assertThrows(NoSuchElementException.class, () -> courseRatingService.getAllCourseRatings(COURSE_ID));
+    }
+
+    @Test
+    void shouldGetCourseRatingAverageSuccessfully() {
+        // given
+        var coursePackage = new CoursePackage("QWER", "course package");
+        var course = new Course("name", "description", 100, "3H", coursePackage, Difficulty.MEDIUM);
+        when(courseRepositoryMock.findById(COURSE_ID)).thenReturn(Optional.of(course));
+        when(courseRatingRepositoryMock.findByCourseId(COURSE_ID))
+                .thenReturn(List.of(new CourseRating(course, CUSTOMER_ID, 5, "Excellent"),
+                        new CourseRating(course, 10L, 4, "Good Course")));
+        var expected = Map.of("average", 4.5d);
+
+        // when
+        var actual = courseRatingService.getCourseRatingAverage(COURSE_ID);
+
+        // then
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void shouldThrowNoSuchElementExceptionWhenGetAllCourseRatingAverage() {
+        // given, when, then
+        assertThrows(NoSuchElementException.class, () -> courseRatingService.getCourseRatingAverage(COURSE_ID));
     }
 }

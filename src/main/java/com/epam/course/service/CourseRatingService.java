@@ -9,7 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -23,15 +26,33 @@ public class CourseRatingService {
         this.courseRepository = courseRepository;
     }
 
-    public void createRating(Long courseId, RatingDto ratingDto) {
-        var course = getCourse(courseId);
+    public void createRating(long courseId, RatingDto ratingDto) {
+        var course = validateCourse(courseId);
         var courseRating = new CourseRating(course, ratingDto.getCustomerId(), ratingDto.getScore(), ratingDto.getComment());
         courseRatingRepository.save(courseRating);
         log.info("Course rating for courseId={}, customerId={} was created with the score={} and comment='{}'",
                 courseId, ratingDto.getCustomerId(), ratingDto.getScore(), ratingDto.getComment());
     }
 
-    private Course getCourse(Long courseId) {
+    public List<RatingDto> getAllCourseRatings(long courseId) {
+        validateCourse(courseId);
+        return courseRatingRepository.findByCourseId(courseId)
+                .stream()
+                .map(RatingDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, Double> getCourseRatingAverage(long courseId) {
+        validateCourse(courseId);
+        var courseRatingAverage = courseRatingRepository.findByCourseId(courseId)
+                .stream()
+                .mapToInt(CourseRating::getScore)
+                .average()
+                .orElseThrow(() -> new NoSuchElementException("Course has no Ratings"));
+        return Map.of("average", courseRatingAverage);
+    }
+
+    private Course validateCourse(long courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new NoSuchElementException("Course does not exists: " + courseId));
     }
