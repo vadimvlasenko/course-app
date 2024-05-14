@@ -1,0 +1,14 @@
+version: "3"
+services:
+  c-mysql:
+    container_name: c-mysql
+    image: mysql
+    environment:
+      - MYSQL_DATABASE=courses
+      - MYSQL_USER=course_user
+      - MYSQL_PASSWORD=course_password
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - "9080:3306"
+    expose:
+      - '9080'
