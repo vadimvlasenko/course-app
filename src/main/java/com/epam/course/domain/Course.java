@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -39,7 +39,7 @@ public class Course {
     private CoursePackage coursePackage;
 
     @Column
-    @Enumerated
+    @Convert(converter = DifficultyConverter.class)
     private Difficulty difficulty;
 
     public Course(String name,
