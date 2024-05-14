@@ -19,8 +19,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CourseRatingServiceTest {
@@ -37,51 +36,42 @@ class CourseRatingServiceTest {
 
     @Test
     void shouldCreateRatingSuccessfully() {
-        // given
         var coursePackage = new CoursePackage("QWER", "course package");
         var course = new Course("name", "description", 100, "3H", coursePackage, Difficulty.MEDIUM);
         when(courseRepositoryMock.findById(COURSE_ID)).thenReturn(Optional.of(course));
 
         var expected = new CourseRating(course, CUSTOMER_ID, 5, "Excellent");
 
-        // when
         courseRatingService.createRating(COURSE_ID, RATING_DTO);
 
-        // then
         verify(courseRatingRepositoryMock).save(expected);
     }
 
     @Test
     void shouldThrowNoSuchElementExceptionWhenCreateRating() {
-        // given, when, then
         assertThrows(NoSuchElementException.class, () -> courseRatingService.createRating(COURSE_ID, RATING_DTO));
     }
 
     @Test
     void shouldGetAllCourseRatingsSuccessfully() {
-        // given
         var coursePackage = new CoursePackage("QWER", "course package");
         var course = new Course("name", "description", 100, "3H", coursePackage, Difficulty.MEDIUM);
         when(courseRepositoryMock.findById(COURSE_ID)).thenReturn(Optional.of(course));
         when(courseRatingRepositoryMock.findByCourseId(COURSE_ID)).thenReturn(List.of(new CourseRating(course, CUSTOMER_ID, 5, "Excellent")));
         var expected = List.of(new RatingDto(CUSTOMER_ID, 5, "Excellent"));
 
-        // when
         var actual = courseRatingService.getAllCourseRatings(COURSE_ID);
 
-        // then
         assertEquals(expected, actual);
     }
 
     @Test
     void shouldThrowNoSuchElementExceptionWhenGetAllCourseRatings() {
-        // given, when, then
         assertThrows(NoSuchElementException.class, () -> courseRatingService.getAllCourseRatings(COURSE_ID));
     }
 
     @Test
     void shouldGetCourseRatingAverageSuccessfully() {
-        // given
         var coursePackage = new CoursePackage("QWER", "course package");
         var course = new Course("name", "description", 100, "3H", coursePackage, Difficulty.MEDIUM);
         when(courseRepositoryMock.findById(COURSE_ID)).thenReturn(Optional.of(course));
@@ -90,16 +80,48 @@ class CourseRatingServiceTest {
                         new CourseRating(course, 10L, 4, "Good Course")));
         var expected = Map.of("average", 4.5d);
 
-        // when
         var actual = courseRatingService.getCourseRatingAverage(COURSE_ID);
 
-        // then
         assertEquals(expected, actual);
     }
 
     @Test
     void shouldThrowNoSuchElementExceptionWhenGetAllCourseRatingAverage() {
-        // given, when, then
         assertThrows(NoSuchElementException.class, () -> courseRatingService.getCourseRatingAverage(COURSE_ID));
+    }
+
+    @Test
+    void shouldUpdateAllCourseRatingSuccessfully() {
+        var updatedRatingDto = new RatingDto(CUSTOMER_ID, 4, "Good");
+        var courseRating = new CourseRating(new Course(), CUSTOMER_ID, 5, "Excellent");
+        when(courseRatingRepositoryMock.findById(CUSTOMER_ID)).thenReturn(Optional.of(courseRating));
+
+        courseRatingService.updateRating(CUSTOMER_ID, updatedRatingDto);
+
+        verify(courseRatingRepositoryMock).save(courseRating);
+        assertEquals(4, courseRating.getRating());
+        assertEquals("Good", courseRating.getComment());
+    }
+
+    @Test
+    void shouldUpdatePartialCourseRatingSuccessfully() {
+        var updatedRatingDto = new RatingDto(CUSTOMER_ID, 3, null); // Only update the rating, keep the comment as is
+        var courseRating = new CourseRating(new Course(), CUSTOMER_ID, 5, "Excellent");
+        when(courseRatingRepositoryMock.findById(CUSTOMER_ID)).thenReturn(Optional.of(courseRating));
+
+        courseRatingService.updateRating(CUSTOMER_ID, updatedRatingDto);
+
+        verify(courseRatingRepositoryMock).save(courseRating);
+        assertEquals(3, courseRating.getRating());
+        assertEquals("Excellent", courseRating.getComment()); // Comment remains unchanged
+    }
+
+    @Test
+    void shouldDeleteCourseRatingSuccessfully() {
+        doNothing().when(courseRatingRepositoryMock).deleteById(CUSTOMER_ID);
+
+        courseRatingService.deleteRating(CUSTOMER_ID);
+
+        verify(courseRatingRepositoryMock).deleteById(CUSTOMER_ID);
     }
 }
